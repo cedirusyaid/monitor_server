@@ -13,6 +13,9 @@ TELEGRAM_API_URL="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
 # Ambil hostname
 HOSTNAME=$(hostname)
 
+# Ambil waktu sekarang
+CURRENT_TIME=$(date '+%Y-%m-%d %H:%M:%S')
+
 # Ambil uptime
 UPTIME_INFO=$(uptime -p)
 
@@ -74,6 +77,7 @@ MESSAGE+="━━━━━━━━━━━━━━━━━━\n"
 MESSAGE+="📡 IP Lokal: $LOCAL_IP\n"
 MESSAGE+="🌎 IP Publik: $PUBLIC_IP\n"
 MESSAGE+="━━━━━━━━━━━━━━━━━━\n"
+MESSAGE+="📅 Waktu: $CURRENT_TIME\n"
 MESSAGE+="🕒 Uptime: $UPTIME_INFO\n"
 MESSAGE+="━━━━━━━━━━━━━━━━━━\n"
 MESSAGE+="🔥 CPU Usage: $CPU_USAGE% dari $TOTAL_CPU_CORES core\n"
