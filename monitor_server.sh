@@ -64,9 +64,15 @@ fi
 # Cek jumlah akses HTTP/HTTPS di Apache2
 HTTP_ACCESS_COUNT=$(netstat -tnp | grep -E ':80|:443' | wc -l)
 
+# Ambil alamat IP lokal dan publik
+LOCAL_IP=$(hostname -I | awk '{print $1}')
+PUBLIC_IP=$(curl -s ifconfig.me)
 
 # Format pesan dengan MarkdownV2
 MESSAGE="#MonitoringServer \$$HOSTNAME\n"
+MESSAGE+="━━━━━━━━━━━━━━━━━━\n"
+MESSAGE+="📡 IP Lokal: $LOCAL_IP\n"
+MESSAGE+="🌎 IP Publik: $PUBLIC_IP\n"
 MESSAGE+="━━━━━━━━━━━━━━━━━━\n"
 MESSAGE+="🕒 Uptime: $UPTIME_INFO\n"
 MESSAGE+="━━━━━━━━━━━━━━━━━━\n"
@@ -85,6 +91,7 @@ MESSAGE+="👤 User Login: $LOGGED_IN_USERS\n"
 MESSAGE+="━━━━━━━━━━━━━━━━━━\n"
 MESSAGE+="🌐 Jumlah Akses HTTP/HTTPS: $HTTP_ACCESS_COUNT koneksi\n"
 MESSAGE+="━━━━━━━━━━━━━━━━━━\n"
+
 
 # Escape karakter spesial agar sesuai dengan MarkdownV2
 MESSAGE=$(echo -e "$MESSAGE" | sed -E 's/([][_*~`>#+=|{}.!()-])/\\\1/g')
