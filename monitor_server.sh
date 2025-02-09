@@ -54,7 +54,7 @@ else
 fi
 
 # Ambil informasi disk yang hanya berasal dari /dev/
-DISK_USAGE_INFO=$(df -h --output=source,target,size,used,pcent | awk '$1 ~ /^\/dev\// {printf "📂 %s : Total: %s, Digunakan: %s (%s)\n", $2, $3, $4, $5}')
+DISK_USAGE_INFO=$(df -h --output=source,target,size,used,pcent | awk '$1 ~ /^\/dev\// {printf "📂 %s : %s / %s (%s)\n", $2, $4, $3, $5}')
 
 # Cek jika data disk kosong
 if [ -z "$DISK_USAGE_INFO" ]; then
