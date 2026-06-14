@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =====================================================
-# RESOURCE ALERT v1.4.0
+# RESOURCE ALERT v1.4.1
 # Monitoring CPU, RAM, Disk, Load dan Temperature
 # UI Redesign inspired by monitoring_server.sh
 # =====================================================
@@ -95,9 +95,11 @@ while read usage mount; do
 
     usage_num=$(echo "$usage" | tr -d '%')
 
-    # Abaikan mount /gudang (Permintaan khusus untuk host ini)
-    if [ "$mount" == "/gudang" ]; then
-        continue
+    # Abaikan mount point yang dikecualikan di .env (pisahkan dengan spasi)
+    if [ ! -z "$EXCLUDE_MOUNTS" ]; then
+        if [[ " $EXCLUDE_MOUNTS " == *" $mount "* ]]; then
+            continue
+        fi
     fi
 
     if [ "$usage_num" -ge "$DISK_LIMIT" ]; then

@@ -1,5 +1,9 @@
 # RELEASE NOTES - MONITOR SERVER
 
+## [v1.4.1] - 2026-06-14
+### 🔄 Changed
+- **Dynamic Disk Exclusion**: Memindahkan konfigurasi pemengecualian disk dari hardcoded di script ke variabel `EXCLUDE_MOUNTS` di berkas `.env` agar dinamis.
+
 ## [v1.4.0] - 2026-06-14
 ### ✨ Added
 - **Top Processes Monitoring**: Menampilkan daftar 5 proses teratas yang menggunakan CPU tertinggi ketika terjadi alert CPU, RAM, Load, atau Suhu CPU, guna mempermudah pencarian penyebab server panas/overload.

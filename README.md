@@ -30,7 +30,7 @@ Di dalam [resource_alert.sh](resource_alert.sh), batas toleransi sumber daya dia
 
 *   **Batas CPU (`CPU_LIMIT`)**: `80%`
 *   **Batas RAM (`RAM_LIMIT`)**: `90%`
-*   **Batas Disk (`DISK_LIMIT`)**: `90%` (mengabaikan mount point `/gudang`)
+*   **Batas Disk (`DISK_LIMIT`)**: `90%` (mengabaikan mount point yang terdaftar di `EXCLUDE_MOUNTS` pada `.env`)
 *   **Batas Suhu (`TEMP_LIMIT`)**: `80°C`
 *   **Batas Load (`LOAD_LIMIT`)**: Dinamis sesuai jumlah core CPU (`nproc`)
 
