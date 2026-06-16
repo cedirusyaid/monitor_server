@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # =====================================================
-# RESOURCE ALERT v1.4.1
-# Monitoring CPU, RAM, Disk, Load dan Temperature
+# RESOURCE ALERT v1.5.0
+# Monitoring CPU, RAM, Disk, Load dan Temperature serta TLP Status
 # UI Redesign inspired by monitoring_server.sh
 # =====================================================
 
@@ -111,6 +111,27 @@ done < <(
 )
 
 # =====================================================
+# TLP STATUS (BATTERY OPTIMIZATION)
+# =====================================================
+
+TLP_STATUS="N/A"
+if command -v tlp-stat >/dev/null 2>&1; then
+    TLP_STATE=$(tlp-stat -s | grep -i "^State" | awk -F'=' '{print $2}' | xargs)
+    TLP_MODE=$(tlp-stat -s | grep -i "^Mode" | awk -F'=' '{print $2}' | xargs)
+    TLP_POWER=$(tlp-stat -s | grep -i "^Power source" | awk -F'=' '{print $2}' | xargs)
+    
+    if [ -z "$TLP_STATE" ]; then
+        TLP_STATUS="Enabled"
+    else
+        TLP_STATUS="$TLP_STATE ($TLP_MODE, Power: $TLP_POWER)"
+    fi
+elif systemctl is-active --quiet tlp >/dev/null 2>&1; then
+    TLP_STATUS="Active (systemctl)"
+else
+    TLP_STATUS="Not Active / Not Installed"
+fi
+
+# =====================================================
 # CEK ALERT
 # =====================================================
 
@@ -161,6 +182,7 @@ echo "Host         : $HOSTNAME"
 echo "IP           : $LOCAL_IP"
 echo "Waktu        : $CURRENT_TIME"
 echo "Uptime       : $UPTIME_INFO"
+echo "TLP Status   : $TLP_STATUS"
 echo "-------------------------------------------------"
 echo "CPU Usage    : ${CPU_USAGE}%"
 echo "RAM Usage    : ${RAM_USAGE}% (${RAM_USED}/${RAM_TOTAL})"
@@ -216,6 +238,7 @@ if [ ! -z "$ALERT" ] || [ "$IS_REPORT_TIME" = true ]; then
     MESSAGE+="📡 IP: $LOCAL_IP / $PUBLIC_IP\n"
     MESSAGE+="📅 Waktu: $CURRENT_TIME\n"
     MESSAGE+="🕒 Uptime: $UPTIME_INFO\n"
+    MESSAGE+="🔋 TLP Status: $TLP_STATUS\n"
     MESSAGE+="┃━━━━━━━━━━━━━━━━━\n"
     MESSAGE+="🔤 CPU: ${CPU_USAGE}%\n"
     MESSAGE+="💾 RAM: ${RAM_USAGE}% (${RAM_USED}/${RAM_TOTAL})\n"

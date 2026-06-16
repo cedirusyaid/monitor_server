@@ -1,5 +1,9 @@
 # RELEASE NOTES - MONITOR SERVER
 
+## [v1.5.0] - 2026-06-16
+### ✨ Added
+- **TLP Status Monitoring**: Menambahkan pemantauan status TLP (Optimasi Baterai) untuk mendeteksi status aktif, mode operasi, dan sumber daya saat ini (AC/Battery). Status ini ditampilkan pada log terminal dan laporan Telegram.
+
 ## [v1.4.1] - 2026-06-14
 ### 🔄 Changed
 - **Dynamic Disk Exclusion**: Memindahkan konfigurasi pemengecualian disk dari hardcoded di script ke variabel `EXCLUDE_MOUNTS` di berkas `.env` agar dinamis.
