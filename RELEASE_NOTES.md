@@ -1,5 +1,10 @@
 # RELEASE NOTES - MONITOR SERVER
 
+## [v1.5.1] - 2026-07-18
+### 🐛 Fixed
+- **Optional Dashboard API**: Pengiriman data ke API Dashboard kini bersifat opsional. Jika `DASHBOARD_API_URL` dikosongkan atau tidak dikonfigurasi di `.env`, script tidak akan mencoba melakukan request dan tidak akan menghasilkan error `HTTP 000`. Sebagai gantinya, muncul pesan info `Skipping Dashboard submission.`
+- Berlaku untuk kedua script: `monitor_server.sh` dan `monitoring_server1.sh`.
+
 ## [v1.5.0] - 2026-06-16
 ### ✨ Added
 - **TLP Status Monitoring**: Menambahkan pemantauan status TLP (Optimasi Baterai) untuk mendeteksi status aktif, mode operasi, dan sumber daya saat ini (AC/Battery). Status ini ditampilkan pada log terminal dan laporan Telegram.

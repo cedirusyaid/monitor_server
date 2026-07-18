@@ -91,15 +91,16 @@ MESSAGE_ESC=$(echo -e "$MESSAGE" | sed -E 's/([][_*~`>#+=|{}.!()-])/\\\1/g')
 curl -s -X POST "$TELEGRAM_API_URL" -d chat_id="$TELEGRAM_CHAT_ID" -d text="$MESSAGE_ESC" -d parse_mode="MarkdownV2" > /dev/null
 
 # --- 2. KIRIM KE API DASHBOARD ---
-# Fungsi untuk meloloskan (escape) karakter yang merusak JSON
-escape_json() {
-    echo "$1" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g'
-}
+if [ -n "$DASHBOARD_API_URL" ]; then
+    # Fungsi untuk meloloskan (escape) karakter yang merusak JSON
+    escape_json() {
+        echo "$1" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g'
+    }
 
-# Format Service Status khusus untuk Dashboard (Pipe separated)
-DASH_SERVICE=$(echo -e "$SERVICE_STATUS" | tr '\n' '|' | sed 's/| *$//' | sed 's/|/ | /g')
+    # Format Service Status khusus untuk Dashboard (Pipe separated)
+    DASH_SERVICE=$(echo -e "$SERVICE_STATUS" | tr '\n' '|' | sed 's/| *$//' | sed 's/|/ | /g')
 
-JSON_DATA=$(cat <<EOF
+    JSON_DATA=$(cat <<EOF
 {
   "hostname": "$(escape_json "$HOSTNAME")",
   "local_ip": "$LOCAL_IP",
@@ -117,16 +118,19 @@ JSON_DATA=$(cat <<EOF
 EOF
 )
 
-# Mengirim data ke Dashboard
-HTTP_STATUS=$(curl -s -w "%{http_code}" -X POST "$DASHBOARD_API_URL" \
-     -H "Content-Type: application/json" \
-     -H "X-MONITOR-TOKEN: $DASHBOARD_API_TOKEN" \
-     -d "$JSON_DATA" -o /dev/null)
+    # Mengirim data ke Dashboard
+    HTTP_STATUS=$(curl -s -w "%{http_code}" -X POST "$DASHBOARD_API_URL" \
+         -H "Content-Type: application/json" \
+         -H "X-MONITOR-TOKEN: $DASHBOARD_API_TOKEN" \
+         -d "$JSON_DATA" -o /dev/null)
 
-if [ "$HTTP_STATUS" -eq 200 ]; then
-    echo "✅ [$(date)] Monitoring data sent successfully to Dashboard"
+    if [ "$HTTP_STATUS" -eq 200 ]; then
+        echo "✅ [$(date)] Monitoring data sent successfully to Dashboard"
+    else
+        echo "❌ [$(date)] Error API Dashboard: HTTP $HTTP_STATUS"
+    fi
 else
-    echo "❌ [$(date)] Error API Dashboard: HTTP $HTTP_STATUS"
+    echo "ℹ️ [$(date)] API Dashboard URL is empty/not configured. Skipping Dashboard submission."
 fi
 
 echo "Monitoring completed at $CURRENT_TIME"

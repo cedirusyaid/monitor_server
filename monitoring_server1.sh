@@ -100,7 +100,8 @@ E_USERS=$(escape_json "$LOGGED_IN_USERS")
 E_DISK=$(escape_json "$DISK_USAGE_JSON")
 
 # --- 2. KIRIM KE API DASHBOARD ---
-JSON_DATA=$(cat <<EOF
+if [ -n "$DASHBOARD_API_URL" ]; then
+    JSON_DATA=$(cat <<EOF
 {
   "hostname": "$E_HOSTNAME",
   "local_ip": "$LOCAL_IP",
@@ -118,20 +119,23 @@ JSON_DATA=$(cat <<EOF
 EOF
 )
 
-# Mengirim data dan menangkap HTTP status code serta response body
-RESPONSE_FILE=$(mktemp)
-HTTP_STATUS=$(curl -s -w "%{http_code}" -X POST "$DASHBOARD_API_URL" \
-     -H "Content-Type: application/json" \
-     -H "X-MONITOR-TOKEN: $DASHBOARD_API_TOKEN" \
-     -d "$JSON_DATA" \
-     -o "$RESPONSE_FILE")
+    # Mengirim data dan menangkap HTTP status code serta response body
+    RESPONSE_FILE=$(mktemp)
+    HTTP_STATUS=$(curl -s -w "%{http_code}" -X POST "$DASHBOARD_API_URL" \
+         -H "Content-Type: application/json" \
+         -H "X-MONITOR-TOKEN: $DASHBOARD_API_TOKEN" \
+         -d "$JSON_DATA" \
+         -o "$RESPONSE_FILE")
 
-RESPONSE_BODY=$(cat "$RESPONSE_FILE")
-rm "$RESPONSE_FILE"
+    RESPONSE_BODY=$(cat "$RESPONSE_FILE")
+    rm "$RESPONSE_FILE"
 
-if [ "$HTTP_STATUS" -eq 200 ]; then
-    echo "✅ [$(date)] Monitoring data sent successfully to Dashboard"
+    if [ "$HTTP_STATUS" -eq 200 ]; then
+        echo "✅ [$(date)] Monitoring data sent successfully to Dashboard"
+    else
+        echo "❌ [$(date)] Error API Dashboard: $HTTP_STATUS - $RESPONSE_BODY"
+    fi
 else
-    echo "❌ [$(date)] Error API Dashboard: $HTTP_STATUS - $RESPONSE_BODY"
+    echo "ℹ️ [$(date)] API Dashboard URL is empty/not configured. Skipping Dashboard submission."
 fi
 echo "Monitoring data sent at $CURRENT_TIME"
