@@ -42,12 +42,54 @@ else
     INTERNET_JSON="FAIL"
 fi
 
-# Cek status service dengan dukungan wildcard
+# Fungsi resolusi nama service alternatif antar OS/Panel (aaPanel, cPanel, Ubuntu, CentOS, dll.)
+resolve_service() {
+    local target="$1"
+
+    # Jika nama unit sudah ditemukan di sistem
+    if systemctl cat "$target" >/dev/null 2>&1; then
+        echo "$target"
+        return 0
+    fi
+
+    # Cek kandidat alias jika service target tidak ada di sistem
+    local candidates=()
+    case "$target" in
+        apache2|httpd|apache)
+            candidates=("httpd" "apache2" "apache")
+            ;;
+        mysql|mysqld|mariadb)
+            candidates=("mariadb" "mysqld" "mysql")
+            ;;
+        ssh|sshd)
+            candidates=("sshd" "ssh")
+            ;;
+    esac
+
+    for alt in "${candidates[@]}"; do
+        if [ "$alt" != "$target" ] && systemctl cat "$alt" >/dev/null 2>&1; then
+            echo "$alt"
+            return 0
+        fi
+    done
+
+    # Fallback ke nama asli jika tidak ada alternatif yang cocok
+    echo "$target"
+}
+
+# Cek status service dengan dukungan wildcard & auto-fallback panel
 SERVICE_STATUS=""
 for SERVICE in $SERVICE_LIST; do
     if [[ "$SERVICE" == *\** ]]; then
         PATTERN="${SERVICE//\*/.*}"
-        for MATCHED_SERVICE in $(systemctl list-units --all --type=service --no-legend 2>/dev/null | awk '{print $1}' | grep "^${PATTERN}" | sed 's/\.service$//'); do
+        MATCHED_SERVICES=$(systemctl list-units --all --type=service --no-legend 2>/dev/null | awk '{print $1}' | grep "^${PATTERN}" | sed 's/\.service$//')
+
+        # Fallback untuk PHP-FPM di cPanel (ea-php*-php-fpm) jika pola php*-fpm tidak menemukan unit
+        if [ -z "$MATCHED_SERVICES" ] && [[ "$SERVICE" == *"php"* ]]; then
+            MATCHED_SERVICES=$(systemctl list-units --all --type=service --no-legend 2>/dev/null | awk '{print $1}' | grep -E '^(ea-)?php.*-fpm' | sed 's/\.service$//')
+        fi
+
+        for MATCHED_SERVICE in $MATCHED_SERVICES; do
             if systemctl is-active --quiet "$MATCHED_SERVICE" 2>/dev/null; then
                 SERVICE_STATUS+="✅ $MATCHED_SERVICE Aktif\n"
             else
@@ -55,10 +97,11 @@ for SERVICE in $SERVICE_LIST; do
             fi
         done
     else
-        if systemctl is-active --quiet "$SERVICE" 2>/dev/null; then
-            SERVICE_STATUS+="✅ $SERVICE Aktif\n"
+        RESOLVED_SERVICE=$(resolve_service "$SERVICE")
+        if systemctl is-active --quiet "$RESOLVED_SERVICE" 2>/dev/null; then
+            SERVICE_STATUS+="✅ $RESOLVED_SERVICE Aktif\n"
         else
-            SERVICE_STATUS+="❌ $SERVICE Mati\n"
+            SERVICE_STATUS+="❌ $RESOLVED_SERVICE Mati\n"
         fi
     fi
 done
