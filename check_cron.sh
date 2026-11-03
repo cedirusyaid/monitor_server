@@ -34,9 +34,17 @@ parse_cron_time() {
     elif [[ "$h" == "*" ]]; then
         desc="Setiap jam pada menit ke-$m"
     elif [[ "$m" == "0" || "$m" == "00" ]]; then
-        desc="Pukul $(printf "%02d:00" "$h")"
+        if [[ "$h" =~ ^[0-9]+$ ]]; then
+            desc="Pukul $(printf "%02d:00" "$h")"
+        else
+            desc="Pukul $h:00"
+        fi
     else
-        desc="Pukul $(printf "%02d:%02d" "$h" "$m")"
+        if [[ "$h" =~ ^[0-9]+$ ]] && [[ "$m" =~ ^[0-9]+$ ]]; then
+            desc="Pukul $(printf "%02d:%02d" "$h" "$m")"
+        else
+            desc="Pukul $h:$m"
+        fi
     fi
 
     # 2. Hari & Bulan
