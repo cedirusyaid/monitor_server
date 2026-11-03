@@ -112,8 +112,8 @@ SERVICE_STATUS=$(echo -e "$SERVICE_STATUS" | sed '/^$/d')
 LOGGED_IN_USERS=$(who | awk '{print $1}' | sort | uniq | tr '\n' ',' | sed 's/,$//')
 [ -z "$LOGGED_IN_USERS" ] && LOGGED_IN_USERS="Tidak ada user"
 
-DISK_USAGE_JSON=$(df -h --output=source,target,size,used,pcent 2>/dev/null | awk '$1 ~ /^\/dev\// {printf "%s:%s/%s (%s), ", $2, $4, $3, $5}' | sed 's/, $//')
-DISK_USAGE_INFO=$(df -h --output=source,target,size,used,pcent 2>/dev/null | awk '$1 ~ /^\/dev\// {printf "📂 %s : %s / %s (%s)\n", $2, $4, $3, $5}')
+DISK_USAGE_JSON=$(df -h -x squashfs -x tmpfs -x devtmpfs --output=source,target,size,used,pcent 2>/dev/null | awk '$1 ~ /^\/dev\// && $1 !~ /^\/dev\/loop/ && $2 !~ /^\/snap/ {printf "%s:%s/%s (%s), ", $2, $4, $3, $5}' | sed 's/, $//')
+DISK_USAGE_INFO=$(df -h -x squashfs -x tmpfs -x devtmpfs --output=source,target,size,used,pcent 2>/dev/null | awk '$1 ~ /^\/dev\// && $1 !~ /^\/dev\/loop/ && $2 !~ /^\/snap/ {printf "📂 %s : %s / %s (%s)\n", $2, $4, $3, $5}')
 
 HTTP_ACCESS_COUNT=$(ss -tnp 2>/dev/null | grep -E ':80|:443' | wc -l)
 if [ $HTTP_ACCESS_COUNT -eq 0 ]; then

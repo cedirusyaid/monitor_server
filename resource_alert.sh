@@ -100,7 +100,7 @@ while read usage mount; do
     fi
 
 done < <(
-    df -h --output=pcent,target | tail -n +2
+    df -h -x squashfs -x tmpfs -x devtmpfs --output=source,pcent,target 2>/dev/null | awk '$1 ~ /^\/dev\// && $1 !~ /^\/dev\/loop/ && $3 !~ /^\/snap/ {print $2, $3}'
 )
 
 # =====================================================
@@ -149,7 +149,7 @@ echo "Load Average : ${LOAD_AVG}"
 echo "Temperature  : ${TEMP}"
 echo "-------------------------------------------------"
 
-df -h --output=target,size,used,pcent | sed 1d
+df -h -x squashfs -x tmpfs -x devtmpfs --output=source,target,size,used,pcent 2>/dev/null | awk '$1 ~ /^\/dev\// && $1 !~ /^\/dev\/loop/ && $2 !~ /^\/snap/ {printf "%-20s %-8s %-8s %-6s\n", $2, $3, $4, $5}'
 
 echo "-------------------------------------------------"
 
