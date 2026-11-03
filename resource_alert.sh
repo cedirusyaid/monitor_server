@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # =====================================================
-# RESOURCE ALERT v1.5.0
-# Monitoring CPU, RAM, Disk, Load dan Temperature serta TLP Status
+# RESOURCE ALERT v1.3.0
+# Monitoring CPU, RAM, Disk, Load dan Temperature
 # UI Redesign inspired by monitoring_server.sh
 # =====================================================
 
@@ -30,7 +30,7 @@ DISK_LIMIT=90
 TEMP_LIMIT=80
 
 # Waktu laporan rutin (format HH:MM), kosongkan jika tidak ingin
-DAILY_REPORT_TIME="21:20"
+DAILY_REPORT_TIME="08:30"
 
 # Load average ideal = jumlah core CPU
 LOAD_LIMIT=$(nproc)
@@ -95,13 +95,6 @@ while read usage mount; do
 
     usage_num=$(echo "$usage" | tr -d '%')
 
-    # Abaikan mount point yang dikecualikan di .env (pisahkan dengan spasi)
-    if [ ! -z "$EXCLUDE_MOUNTS" ]; then
-        if [[ " $EXCLUDE_MOUNTS " == *" $mount "* ]]; then
-            continue
-        fi
-    fi
-
     if [ "$usage_num" -ge "$DISK_LIMIT" ]; then
         DISK_WARNING+="💿 Disk $mount : $usage\n"
     fi
@@ -109,27 +102,6 @@ while read usage mount; do
 done < <(
     df -h --output=pcent,target | tail -n +2
 )
-
-# =====================================================
-# TLP STATUS (BATTERY OPTIMIZATION)
-# =====================================================
-
-TLP_STATUS="N/A"
-if command -v tlp-stat >/dev/null 2>&1; then
-    TLP_STATE=$(tlp-stat -s | grep -i "^State" | awk -F'=' '{print $2}' | xargs)
-    TLP_MODE=$(tlp-stat -s | grep -i "^Mode" | awk -F'=' '{print $2}' | xargs)
-    TLP_POWER=$(tlp-stat -s | grep -i "^Power source" | awk -F'=' '{print $2}' | xargs)
-    
-    if [ -z "$TLP_STATE" ]; then
-        TLP_STATUS="Enabled"
-    else
-        TLP_STATUS="$TLP_STATE ($TLP_MODE, Power: $TLP_POWER)"
-    fi
-elif systemctl is-active --quiet tlp >/dev/null 2>&1; then
-    TLP_STATUS="Active (systemctl)"
-else
-    TLP_STATUS="Not Active / Not Installed"
-fi
 
 # =====================================================
 # CEK ALERT
@@ -159,18 +131,6 @@ if [ ! -z "$DISK_WARNING" ]; then
     ALERT+="$DISK_WARNING"
 fi
 
-# Ambil top processes jika ada alert CPU, RAM, Load, atau Temp
-if [ "$CPU_USAGE" -ge "$CPU_LIMIT" ] || [ "$RAM_USAGE" -ge "$RAM_LIMIT" ] || [ "$LOAD_INT" -gt "$LOAD_LIMIT" ] || { [[ "$TEMP" != "N/A" ]] && [ "$TEMP" -ge "$TEMP_LIMIT" ]; }; then
-    TOP_PROC=$(ps -eo %cpu,%mem,args --sort=-%cpu | grep -v -E "ps -eo|grep -v|%CPU" | head -n 5 | awk '{
-      cpu=$1; mem=$2; $1=""; $2="";
-      sub(/^[ \t]+/, "");
-      cmd=substr($0, 1, 35);
-      if (length($0) > 35) cmd=cmd"...";
-      printf "  🔸 %s (CPU: %s%%, RAM: %s%%)\\n", cmd, cpu, mem
-    }')
-    ALERT+="\n📈 TOP PROCESSES (by CPU):\n$TOP_PROC\n"
-fi
-
 # =====================================================
 # TAMPILKAN KE TERMINAL
 # =====================================================
@@ -182,7 +142,6 @@ echo "Host         : $HOSTNAME"
 echo "IP           : $LOCAL_IP"
 echo "Waktu        : $CURRENT_TIME"
 echo "Uptime       : $UPTIME_INFO"
-echo "TLP Status   : $TLP_STATUS"
 echo "-------------------------------------------------"
 echo "CPU Usage    : ${CPU_USAGE}%"
 echo "RAM Usage    : ${RAM_USAGE}% (${RAM_USED}/${RAM_TOTAL})"
@@ -238,7 +197,6 @@ if [ ! -z "$ALERT" ] || [ "$IS_REPORT_TIME" = true ]; then
     MESSAGE+="📡 IP: $LOCAL_IP / $PUBLIC_IP\n"
     MESSAGE+="📅 Waktu: $CURRENT_TIME\n"
     MESSAGE+="🕒 Uptime: $UPTIME_INFO\n"
-    MESSAGE+="🔋 TLP Status: $TLP_STATUS\n"
     MESSAGE+="┃━━━━━━━━━━━━━━━━━\n"
     MESSAGE+="🔤 CPU: ${CPU_USAGE}%\n"
     MESSAGE+="💾 RAM: ${RAM_USAGE}% (${RAM_USED}/${RAM_TOTAL})\n"

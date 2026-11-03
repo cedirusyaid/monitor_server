@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================================================
-# SCRIPT MONITORING SERVER v2.1
+# SCRIPT MONITORING SERVER v2.1 (Tailored for SIMKOM)
 # ==========================================================================
 
 # Mendapatkan direktori dimana script ini berada
@@ -16,8 +16,8 @@ else
     exit 1
 fi
 
-# Konfigurasi API Dashboard (diambil dari .env)
-# DASHBOARD_API_URL dan DASHBOARD_API_TOKEN sudah tersedia dari source .env
+# Konfigurasi API SIMKOM (diambil dari .env)
+# SIMKOM_API_URL dan SIMKOM_TOKEN sudah tersedia dari source .env
 
 TELEGRAM_API_URL="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
 
@@ -82,7 +82,7 @@ PUBLIC_IP=$(curl -s --connect-timeout 5 ifconfig.me 2>/dev/null)
 [ -z "$PUBLIC_IP" ] && PUBLIC_IP="Tidak terdeteksi"
 
 # --- 1. KIRIM KE TELEGRAM ---
-MESSAGE="#MonitoringServer $HOSTNAME\n┃━━━━━━━━━━━━━━━━━\n📡 IP: $LOCAL_IP / $PUBLIC_IP\n┃━━━━━━━━━━━━━━━━━\n📅 Waktu: $CURRENT_TIME\n🕒 Uptime: $UPTIME_INFO\n┃━━━━━━━━━━━━━━━━━\n🔤 CPU: $CPU_USAGE% ($TOTAL_CPU_CORES core)\n💾 RAM: $MEM_USAGE% ($MEM_DETAIL)\n┃━━━━━━━━━━━━━━━━━\n💿 Disk:\n$DISK_USAGE_INFO\n┃━━━━━━━━━━━━━━━━━\n🌍 Internet: $INTERNET_STATUS\n┃━━━━━━━━━━━━━━━━━\n🛠 Status Service:\n$SERVICE_STATUS\n┃━━━━━━━━━━━━━━━━━\n👤 User: $LOGGED_IN_USERS\n🌐 Akses HTTP: $HTTP_ACCESS_COUNT koneksi\n┃━━━━━━━━━━━━━━━━━"
+MESSAGE="#MonitoringServer $HOSTNAME\n┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📡 IP: $LOCAL_IP / $PUBLIC_IP\n┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📅 Waktu: $CURRENT_TIME\n🕒 Uptime: $UPTIME_INFO\n┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔤 CPU: $CPU_USAGE% ($TOTAL_CPU_CORES core)\n💾 RAM: $MEM_USAGE% ($MEM_DETAIL)\n┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n💿 Disk:\n$DISK_USAGE_INFO\n┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🌍 Internet: $INTERNET_STATUS\n┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🛠 Status Service:\n$SERVICE_STATUS\n┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n👤 User: $LOGGED_IN_USERS\n🌐 Akses HTTP: $HTTP_ACCESS_COUNT koneksi\n┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # Escape untuk MarkdownV2 Telegram
 MESSAGE_ESC=$(echo -e "$MESSAGE" | sed -E 's/([][_*~`>#+=|{}.!()-])/\\\1/g')
@@ -90,17 +90,16 @@ MESSAGE_ESC=$(echo -e "$MESSAGE" | sed -E 's/([][_*~`>#+=|{}.!()-])/\\\1/g')
 # Eksekusi curl ke Telegram
 curl -s -X POST "$TELEGRAM_API_URL" -d chat_id="$TELEGRAM_CHAT_ID" -d text="$MESSAGE_ESC" -d parse_mode="MarkdownV2" > /dev/null
 
-# --- 2. KIRIM KE API DASHBOARD ---
-if [ -n "$DASHBOARD_API_URL" ]; then
-    # Fungsi untuk meloloskan (escape) karakter yang merusak JSON
-    escape_json() {
-        echo "$1" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g'
-    }
+# --- 2. KIRIM KE API SIMKOM ---
+# Fungsi untuk meloloskan (escape) karakter yang merusak JSON
+escape_json() {
+    echo "$1" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g'
+}
 
-    # Format Service Status khusus untuk Dashboard (Pipe separated)
-    DASH_SERVICE=$(echo -e "$SERVICE_STATUS" | tr '\n' '|' | sed 's/| *$//' | sed 's/|/ | /g')
+# Format Service Status khusus untuk Dashboard (Pipe separated)
+DASH_SERVICE=$(echo -e "$SERVICE_STATUS" | tr '\n' '|' | sed 's/| *$//' | sed 's/|/ | /g')
 
-    JSON_DATA=$(cat <<EOF
+JSON_DATA=$(cat <<EOF
 {
   "hostname": "$(escape_json "$HOSTNAME")",
   "local_ip": "$LOCAL_IP",
@@ -118,20 +117,20 @@ if [ -n "$DASHBOARD_API_URL" ]; then
 EOF
 )
 
-    # Mengirim data ke Dashboard
-    HTTP_STATUS=$(curl -s -w "%{http_code}" -X POST "$DASHBOARD_API_URL" \
+# Mengirim data ke SIMKOM
+    HTTP_STATUS=$(curl -sk -w "%{http_code}" -X POST "$SIMKOM_API_URL" \
          -H "Content-Type: application/json" \
-         -H "X-MONITOR-TOKEN: $DASHBOARD_API_TOKEN" \
+         -H "X-MONITOR-TOKEN: $SIMKOM_TOKEN" \
          -d "$JSON_DATA" -o /dev/null)
 
-    if [ "$HTTP_STATUS" -eq 200 ]; then
-        echo "✅ [$(date)] Monitoring data sent successfully to Dashboard"
-    else
-        echo "❌ [$(date)] Error API Dashboard: HTTP $HTTP_STATUS"
-    fi
+
+
+if [ "$HTTP_STATUS" -eq 200 ]; then
+    echo "✅ [$(date)] Monitoring data sent successfully to SIMKOM"
 else
-    echo "ℹ️ [$(date)] API Dashboard URL is empty/not configured. Skipping Dashboard submission."
+    echo "❌ [$(date)] Error API SIMKOM: HTTP $HTTP_STATUS"
 fi
 
 echo "Monitoring completed at $CURRENT_TIME"
 echo "=========================================="
+
